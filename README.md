@@ -19,26 +19,34 @@ Script for scraping Lambgoat new releases and putting them into public calendar.
    - get credentials from `Credentials` screen
    - credentials must be in `~/.credentials/credentials.json`
 
- 3. Generate API credentials for last.fm (you'll find guide on internet)
+ 3. Generate API credentials for last.fm (you'll find guide on internet) - https://www.last.fm/api/accounts
 
  4. Create `config.yml` file in the directory with the script in following format:
 
 ```
-    last_fm:
-      api_url: "https://ws.audioscrobbler.com/2.0/"
-      api_key: "LAST_FM_API_KEY"
-    lambgoat:
-      url: "https://lambgoat.com/albums/releases/2023"
-    gcal:
-      id: "a@group.calendar.google.com"
-      hardcore_id: "b@group.calendar.google.com"
-      death_id: "c@group.calendar.google.com"
-      black_id: "d@group.calendar.google.com"
+last_fm:
+  api_url: "https://ws.audioscrobbler.com/2.0/"
+  api_key: "LAST_FM_API_KEY"
+lambgoat:
+  url: "https://lambgoat.com/albums/releases/2023"
+gcal:
+  id: "a@group.calendar.google.com"
+  hardcore_id: "b@group.calendar.google.com"
+  death_id: "c@group.calendar.google.com"
+  black_id: "d@group.calendar.google.com"
 ```
 
- 4. Run manually: `python3 new-hc-metal-releases-to-calendar.py` 
+ 4. create python venv and install requirements:
 
- 5. Every day at 10 AM: `0 10 * * * cd /Users/username/new-hc-metal-releases-to-calendar/ && /usr/bin/python3 new-hc-metal-releases-to-calendar.py >cron.log 2>cron.log`
+```
+python3 -m venv .venv
+source .venv/bin/activate
+pip3 install -r requirements.txt
+```
+
+ 5. Run manually: `python3 new-hc-metal-releases-to-calendar.py` 
+
+ 6. Every day at 10 AM: `0 10 * * * cd /Users/username/new-hc-metal-releases-to-calendar/ && /usr/bin/python3 new-hc-metal-releases-to-calendar.py >cron.log 2>cron.log`
 
 ## TODO
 
