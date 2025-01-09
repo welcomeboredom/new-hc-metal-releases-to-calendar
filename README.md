@@ -48,6 +48,16 @@ pip3 install -r requirements.txt
 
  6. Every day at 10 AM: `0 10 * * * cd /Users/username/new-hc-metal-releases-to-calendar/ && /usr/bin/python3 new-hc-metal-releases-to-calendar.py >cron.log 2>cron.log`
 
+## Troubleshooting
+
+1. Error:
+```
+google.auth.exceptions.RefreshError: ('invalid_grant: Bad Request', {'error': 'invalid_grant', 'error_description': 'Bad Request'})
+```
+Caused by `~/.credentials/token.pickle` file - remove it with `rm .credentials/token.pickle` 
+
+Then run the app, reapprove in screen.
+
 ## TODO
 
  - 'artist country' in summary

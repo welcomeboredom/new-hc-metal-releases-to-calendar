@@ -13,7 +13,7 @@ from gcsa.google_calendar import GoogleCalendar
 from datetime import datetime, timedelta
 
 # Functions
-def get_releases(url: str) -> dict:
+def get_lambgoat_releases(url: str) -> dict:
     # fetches the URL and converts <table> with releases into dictionary (json)
     releases = []
 
@@ -40,6 +40,32 @@ def get_releases(url: str) -> dict:
     # 2 = Album
     # 3 = Label
 
+def get_theprpr_releases(url: str) -> dict:
+    # fetches the URL and coverts div/span tags into dictionary (json)
+    releases = []
+
+    # theprp.com is blocking requests library default user-agent
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36'}
+
+    try:
+        response = requests.get(url, headers=headers)
+        soup = BeautifulSoup(response.content, 'html.parser')
+    except:
+        print("Exception when fetching lambgoat")
+        return releases
+    
+    rows = soup.find_all("div", class_="rel_row")
+    for row in rows:
+        release = []
+        cells = row.find_all("span")
+        for cell in cells:
+            if cell.text != "":
+                print(cell.text.replace("/25", "/2025")) # this is very dirty trick to replace date "01/01/24" with "01/01/2024"
+                release.append(cell.text.replace("/25", "/2025")) # this is very dirty trick to replace date "01/01/24" with "01/01/2024"
+        releases.append(release)
+
+    return releases
+
 def remove_past_releases(releases: list) -> list:
 
     future_releases = []
@@ -53,7 +79,7 @@ def remove_past_releases(releases: list) -> list:
 
 def create_release_event(calendar, release, tags):
 
-    bullshit_genres = ["seen live", "pop", "soul", "rnb", "house"]
+    bullshit_genres = ["seen live", "pop", "soul", "rnb", "house", "instrumental"]
 
     tags_formatted = ""
     tags_clean = []
@@ -125,9 +151,12 @@ if __name__ == "__main__":
     with open("config.yml", "r") as config_file:
         CONFIG = yaml.load(config_file, Loader=yaml.FullLoader)
 
-    releases = get_releases(CONFIG["lambgoat"]["url"])
+    releases = get_lambgoat_releases(CONFIG["lambgoat"]["url"])
+    theprp_releases = get_theprpr_releases(CONFIG["theprp"]["url"])
+    print(theprp_releases)
 
     future_releases = remove_past_releases(releases)
+    future_theprp_releases = remove_past_releases(theprp_releases)
     # TEMPORARY - POPULATING THE CALENDAR WITH PAST EVENTS SO WE DON"T FILTER TEMPORARILY
     #future_releases = releases
     # TEMPORARY
@@ -136,9 +165,15 @@ if __name__ == "__main__":
     hardcore_calendar = GoogleCalendar(CONFIG["gcal"]["hardcore_id"])
     death_calendar = GoogleCalendar(CONFIG["gcal"]["death_id"])
     black_calendar = GoogleCalendar(CONFIG["gcal"]["black_id"])
+    theprp_calendar = GoogleCalendar(CONFIG["gcal"]["theprp_id"])
 
     #collect all future events in common calendar - I use it as source of truth even for genre calendars
     releases_in_calendar = []
+    for event in calendar:
+        event_summary_without_genres = re.sub(' \[.*\]$', '', event.summary)
+        releases_in_calendar.append(event_summary_without_genres)
+
+    releases_in_theprp_calendar = []
     for event in calendar:
         event_summary_without_genres = re.sub(' \[.*\]$', '', event.summary)
         releases_in_calendar.append(event_summary_without_genres)
@@ -148,6 +183,18 @@ if __name__ == "__main__":
     hardcore_events_created_count = 0
     black_events_created_count = 0
     death_events_created_count = 0
+    theprp_events_created_count = 0
+
+    for release in future_theprp_releases:
+        release_full_name = release[1] + " - " + release[2]
+
+        tags = get_artist_tags_from_last_fm(release[1], CONFIG["last_fm"]["api_key"], CONFIG["last_fm"]["api_url"])
+
+        create_release_event(theprp_calendar, release, tags)
+        theprp_events_created_count += 1
+    
+    if theprp_events_created_count > 0:
+        print("Total {} THEPRP event(s) created.".format(theprp_events_created_count))
 
     for release in future_releases:
         release_full_name = release[1] + " - " + release[2]
