@@ -60,8 +60,12 @@ def get_theprpr_releases(url: str) -> dict:
         cells = row.find_all("span")
         for cell in cells:
             if cell.text != "":
-                print(cell.text.replace("/25", "/2025")) # this is very dirty trick to replace date "01/01/24" with "01/01/2024"
-                release.append(cell.text.replace("/25", "/2025")) # this is very dirty trick to replace date "01/01/24" with "01/01/2024"
+                #print(cell.text.replace("/25", "/2025")) # this is very dirty trick to replace date "01/01/24" with "01/01/2024"
+                #release.append(cell.text.replace("/25", "/2025")) # this is very dirty trick to replace date "01/01/24" with "01/01/2024"
+                cell_text = expand_date_if_short_year(cell.text)
+                print(cell_text) # debug
+                release.append(cell_text)
+                
         releases.append(release)
 
     return releases
@@ -144,8 +148,33 @@ def get_artist_tags_from_last_fm(artist: str, api_key: str, api_url: str) -> lis
 
     return tags
 
+def expand_date_if_short_year(date_str):
+    # Regular expression to match the format DD/MM/YY
+    pattern = r'^\d{2}/\d{2}/\d{2}$'
+
+    # Check if the date string matches the pattern
+    if re.match(pattern, date_str):
+        # Find the last '/' to isolate the year
+        last_slash_index = date_str.rfind('/')
+
+        # Extract the two-digit year
+        two_digit_year = date_str[last_slash_index + 1:]
+
+        # Prepend '20' to the two-digit year
+        expanded_year = '20' + two_digit_year
+
+        # Construct the new date string
+        expanded_date = date_str[:last_slash_index + 1] + expanded_year
+
+        return expanded_date
+
+    # Return the original string if it does not match the format
+    return date_str
+
 # Main body
 if __name__ == "__main__":
+
+    enable_calendar_event_creation = True
 
     # config
     with open("config.yml", "r") as config_file:
@@ -185,46 +214,48 @@ if __name__ == "__main__":
     death_events_created_count = 0
     theprp_events_created_count = 0
 
-    for release in future_theprp_releases:
-        release_full_name = release[1] + " - " + release[2]
+    if enable_calendar_event_creation: # feature flag - change to False to stop creating events
 
-        tags = get_artist_tags_from_last_fm(release[1], CONFIG["last_fm"]["api_key"], CONFIG["last_fm"]["api_url"])
-
-        create_release_event(theprp_calendar, release, tags)
-        theprp_events_created_count += 1
-    
-    if theprp_events_created_count > 0:
-        print("Total {} THEPRP event(s) created.".format(theprp_events_created_count))
-
-    for release in future_releases:
-        release_full_name = release[1] + " - " + release[2]
-
-        if release_full_name not in releases_in_calendar:
+        for release in future_theprp_releases:
+            release_full_name = release[1] + " - " + release[2]
 
             tags = get_artist_tags_from_last_fm(release[1], CONFIG["last_fm"]["api_key"], CONFIG["last_fm"]["api_url"])
 
-            hardcore_event_created = False
-            black_event_created = False
-            death_event_created = False
+            create_release_event(theprp_calendar, release, tags)
+            theprp_events_created_count += 1
+        
+        if theprp_events_created_count > 0:
+            print("Total {} THEPRP event(s) created.".format(theprp_events_created_count))
 
-            for tag in tags:
-                if "core" in tag and not hardcore_event_created:
-                    create_release_event(hardcore_calendar, release, tags)
-                    hardcore_events_created_count += 1
-                    hardcore_event_created = True
-                if "black" in tag and not black_event_created:
-                    create_release_event(black_calendar, release, tags)
-                    black_events_created_count += 1
-                    black_event_created = True
-                if "death" in tag and not death_event_created:
-                    create_release_event(death_calendar, release, tags)
-                    death_events_created_count += 1
-                    death_event_created = True
-                if hardcore_event_created and black_event_created and death_event_created: # we don't have to continue looping the tags if we've already created event in all 3 genre calendars
-                    break
+        for release in future_releases:
+            release_full_name = release[1] + " - " + release[2]
 
-            create_release_event(calendar, release, tags)
-            events_created_count += 1
+            if release_full_name not in releases_in_calendar:
+
+                tags = get_artist_tags_from_last_fm(release[1], CONFIG["last_fm"]["api_key"], CONFIG["last_fm"]["api_url"])
+
+                hardcore_event_created = False
+                black_event_created = False
+                death_event_created = False
+
+                for tag in tags:
+                    if "core" in tag and not hardcore_event_created:
+                        create_release_event(hardcore_calendar, release, tags)
+                        hardcore_events_created_count += 1
+                        hardcore_event_created = True
+                    if "black" in tag and not black_event_created:
+                        create_release_event(black_calendar, release, tags)
+                        black_events_created_count += 1
+                        black_event_created = True
+                    if "death" in tag and not death_event_created:
+                        create_release_event(death_calendar, release, tags)
+                        death_events_created_count += 1
+                        death_event_created = True
+                    if hardcore_event_created and black_event_created and death_event_created: # we don't have to continue looping the tags if we've already created event in all 3 genre calendars
+                        break
+
+                create_release_event(calendar, release, tags)
+                events_created_count += 1
     
     if events_created_count > 0:
         print("Total {} event(s) created.".format(events_created_count))
