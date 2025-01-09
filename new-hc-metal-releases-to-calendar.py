@@ -174,7 +174,9 @@ def expand_date_if_short_year(date_str):
 # Main body
 if __name__ == "__main__":
 
+    # FEATURE FLAGS
     enable_calendar_event_creation = True
+    clean_calendars = False
 
     # config
     with open("config.yml", "r") as config_file:
@@ -219,13 +221,14 @@ if __name__ == "__main__":
         for release in future_theprp_releases:
             release_full_name = release[1] + " - " + release[2]
 
-            tags = get_artist_tags_from_last_fm(release[1], CONFIG["last_fm"]["api_key"], CONFIG["last_fm"]["api_url"])
+            if release_full_name not in releases_in_theprp_calendar:
 
-            create_release_event(theprp_calendar, release, tags)
-            theprp_events_created_count += 1
+                tags = get_artist_tags_from_last_fm(release[1], CONFIG["last_fm"]["api_key"], CONFIG["last_fm"]["api_url"])
+
+                create_release_event(theprp_calendar, release, tags)
+                theprp_events_created_count += 1
         
-        if theprp_events_created_count > 0:
-            print("Total {} THEPRP event(s) created.".format(theprp_events_created_count))
+        print("Total {} THEPRP event(s) created.".format(theprp_events_created_count))
 
         for release in future_releases:
             release_full_name = release[1] + " - " + release[2]
@@ -257,22 +260,25 @@ if __name__ == "__main__":
                 create_release_event(calendar, release, tags)
                 events_created_count += 1
     
-    if events_created_count > 0:
-        print("Total {} event(s) created.".format(events_created_count))
-        print("Total {} hardcore event(s) created.".format(hardcore_events_created_count))
-        print("Total {} black event(s) created.".format(black_events_created_count))
-        print("Total {} death event(s) created.".format(death_events_created_count))
+    print("Total {} event(s) created.".format(events_created_count))
+    print("Total {} hardcore event(s) created.".format(hardcore_events_created_count))
+    print("Total {} black event(s) created.".format(black_events_created_count))
+    print("Total {} death event(s) created.".format(death_events_created_count))
 
-### CLEANUP SECTION ###
+    ### REMOVE ALL EVENTS FLAG ###
+    if clean_calendars:
 
-    # for event in calendar.get_events(datetime(2021, 1, 1),datetime(2021, 12, 12)):
-    #     calendar.delete_event(event.event_id)
+        # for event in calendar.get_events(datetime(2021, 1, 1),datetime(2021, 12, 12)):
+        #     calendar.delete_event(event.event_id)
 
-    # for event in hardcore_calendar.get_events(datetime(2021, 1, 1),datetime(2021, 12, 12)):
-    #     hardcore_calendar.delete_event(event.event_id)
+        # for event in hardcore_calendar.get_events(datetime(2021, 1, 1),datetime(2021, 12, 12)):
+        #     hardcore_calendar.delete_event(event.event_id)
 
-    # for event in death_calendar.get_events(datetime(2021, 1, 1),datetime(2021, 12, 12)):
-    #     death_calendar.delete_event(event.event_id)
+        # for event in death_calendar.get_events(datetime(2021, 1, 1),datetime(2021, 12, 12)):
+        #     death_calendar.delete_event(event.event_id)
 
-    # for event in black_calendar.get_events(datetime(2021, 1, 1),datetime(2021, 12, 12)):
-    #     black_calendar.delete_event(event.event_id)
+        # for event in black_calendar.get_events(datetime(2021, 1, 1),datetime(2021, 12, 12)):
+        #     black_calendar.delete_event(event.event_id)
+
+        for event in theprp_calendar.get_events(datetime(2025, 1, 1),datetime(2025, 12, 12)):
+            theprp_calendar.delete_event(event.event_id)
