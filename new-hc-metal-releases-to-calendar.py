@@ -60,8 +60,6 @@ def get_theprpr_releases(url: str) -> dict:
         cells = row.find_all("span")
         for cell in cells:
             if cell.text != "":
-                #print(cell.text.replace("/25", "/2025")) # this is very dirty trick to replace date "01/01/24" with "01/01/2024"
-                #release.append(cell.text.replace("/25", "/2025")) # this is very dirty trick to replace date "01/01/24" with "01/01/2024"
                 cell_text = expand_date_if_short_year(cell.text)
                 print(cell_text) # debug
                 release.append(cell_text)
@@ -188,9 +186,6 @@ if __name__ == "__main__":
 
     future_releases = remove_past_releases(releases)
     future_theprp_releases = remove_past_releases(theprp_releases)
-    # TEMPORARY - POPULATING THE CALENDAR WITH PAST EVENTS SO WE DON"T FILTER TEMPORARILY
-    #future_releases = releases
-    # TEMPORARY
 
     calendar = GoogleCalendar(CONFIG["gcal"]["id"])
     hardcore_calendar = GoogleCalendar(CONFIG["gcal"]["hardcore_id"])
@@ -205,9 +200,9 @@ if __name__ == "__main__":
         releases_in_calendar.append(event_summary_without_genres)
 
     releases_in_theprp_calendar = []
-    for event in calendar:
+    for event in theprp_calendar:
         event_summary_without_genres = re.sub(' \[.*\]$', '', event.summary)
-        releases_in_calendar.append(event_summary_without_genres)
+        releases_in_theprp_calendar.append(event_summary_without_genres)
 
     # this is where the things happens
     events_created_count = 0
@@ -220,7 +215,6 @@ if __name__ == "__main__":
 
         for release in future_theprp_releases:
             release_full_name = release[1] + " - " + release[2]
-
             if release_full_name not in releases_in_theprp_calendar:
 
                 tags = get_artist_tags_from_last_fm(release[1], CONFIG["last_fm"]["api_key"], CONFIG["last_fm"]["api_url"])
